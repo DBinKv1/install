@@ -23,7 +23,8 @@ TMP_DIR=$(mktemp -d)
 git clone "$BASE_URL" "$TMP_DIR"  || error "failed to download $BASE_URL"
 
 mkdir -p "$INSTALL_DIR"
-mv "$TMP_DIR/skills/"* "$INSTALL_DIR/"  || error "failed to move skills to $INSTALL_DIR"
+cp -r "$TMP_DIR/skills/"* "$INSTALL_DIR/"  || error "failed to copy skills to $INSTALL_DIR"
 rm -rf "$TMP_DIR"
 
 success "installed skills to $INSTALL_DIR"
+ls -l "$INSTALL_DIR"  | grep "wuji-cli"
