@@ -27,7 +27,7 @@ check_path() {
     esac
 }
 
-# 检测架构
+# Detect system architecture
 detect_arch() {
     arch=$(uname -m)
     case "$arch" in
@@ -37,27 +37,25 @@ detect_arch() {
     esac
 }
 
-# 下载文件
+# Download file
 download() {
     if command -v curl >/dev/null 2>&1; then
-        # curl -sSfL "$1" -o "$2"  # 无进度条
         curl -fL "$1" -o "$2"
     else
-        # wget -qO "$2" "$1"  # 无进度条
         wget -O "$2" "$1"
     fi
 }
 
 main() {
 
-    # 检查环境
+    # Check prerequisites
     need_cmd uname
     need_cmd mktemp
     if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
         error "need curl or wget"
     fi
 
-    # 检测架构
+    # Detect architecture
     ARCH=$(detect_arch)
     URL="${BASE_URL}/${BINARY_NAME}_${VERSION}_${ARCH}"
 
@@ -66,9 +64,9 @@ main() {
 
     info "downloading $URL to $TMPFILE"
 
-    download "$URL" "$TMPFILE" || error "download failed"
+    download "$URL" "$TMPFILE" || error "download failed, please try again later"
 
-    # 安装
+    # Install binary
     DEST="${INSTALL_DIR}/${BINARY_NAME}"
     mkdir -p "$INSTALL_DIR" || error "cannot create $INSTALL_DIR"
     chmod +x "$TMPFILE"
@@ -81,7 +79,7 @@ main() {
     success "wuji-cli installed to $DEST"
     success "run 'wuji --help' to get started"
 
-    # 检查 PATH 是否包含安装目录
+    # Check if install dir is in PATH
     check_path "$INSTALL_DIR"
 }
 
