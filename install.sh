@@ -4,7 +4,8 @@ set -u
 VERSION="0.1.0-rc.6"
 GITHUB_REPO="DBinKv1/install"
 
-BASE_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}"
+# BASE_URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}"
+BASE_URL="https://s3.click.diy/wuji-cli/v${VERSION}"
 
 BINARY_NAME="wuji"
 INSTALL_DIR="$HOME/.local/bin"
@@ -15,6 +16,16 @@ error() { printf "\033[31m[ERROR]\033[0m %s\n" "$*" >&2; exit 1; }
 success() { printf "\033[32m[SUCCESS]\033[0m %s\n" "$*"; }
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || error "need '$1'"; }
+
+# Check if install dir is in PATH, warn if not
+check_path() {
+    case ":$PATH:" in
+        *:"$1":*) ;;
+        *)
+            warn "$1 is not in PATH, add 'export PATH=\"$1:\$PATH\"' to your shell config (~/.bashrc, ~/.zshrc, etc.)"
+            ;;
+    esac
+}
 
 # 检测架构
 detect_arch() {
@@ -29,9 +40,11 @@ detect_arch() {
 # 下载文件
 download() {
     if command -v curl >/dev/null 2>&1; then
-        curl -sSfL "$1" -o "$2"
+        # curl -sSfL "$1" -o "$2"  # 无进度条
+        curl -fL "$1" -o "$2"
     else
-        wget -qO "$2" "$1"
+        # wget -qO "$2" "$1"  # 无进度条
+        wget -O "$2" "$1"
     fi
 }
 
@@ -46,22 +59,30 @@ main() {
 
     # 检测架构
     ARCH=$(detect_arch)
-    info "downloading $BINARY_NAME v${VERSION} (${ARCH})..."
     URL="${BASE_URL}/${BINARY_NAME}_${VERSION}_${ARCH}"
-    DEST="${INSTALL_DIR}/${BINARY_NAME}"
 
     TMPDIR=$(mktemp -d)
-    download "$URL" "$TMPDIR/$BINARY_NAME"
+    TMPFILE="$TMPDIR/$BINARY_NAME"
 
-    warn "$URL"
+    info "downloading $URL to $TMPFILE"
+
+    download "$URL" "$TMPFILE" || error "download failed"
 
     # 安装
+    DEST="${INSTALL_DIR}/${BINARY_NAME}"
     mkdir -p "$INSTALL_DIR" || error "cannot create $INSTALL_DIR"
-    chmod +x "$TMPDIR/$BINARY_NAME"
-    mv "$TMPDIR/$BINARY_NAME" "$DEST"
+    chmod +x "$TMPFILE"
+
+    info "installing $TMPFILE to $DEST"
+    
+    mv "$TMPFILE" "$DEST"
     rm -rf "$TMPDIR"
 
-    success "installed to $DEST"
+    success "wuji-cli installed to $DEST"
+    success "run 'wuji --help' to get started"
+
+    # 检查 PATH 是否包含安装目录
+    check_path "$INSTALL_DIR"
 }
 
 main
