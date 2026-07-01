@@ -17,20 +17,27 @@ success() { printf "\033[32m[SUCCESS]\033[0m %s\n" "$*"; }
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || error "need '$1'"; }
 
-# Check if install dir is in PATH, append to shell config if not
+# Append a PATH export to shell config files (.bashrc, .zshrc, .profile)
+# if the install dir is not already in PATH, so it persists across sessions.
+# If a previous block was commented out, PATH simply won't contain the dir in
+# a fresh shell, so we just append a new block — no need to detect that case.
 ensure_path() {
+    # Already in PATH — nothing to persist
     case ":$PATH:" in
-        *:"$1":*) ;;
-        *)
-            line="export PATH=\"$1:\$PATH\""
-            for rc in ".bashrc" ".zshrc" ".profile"; do
-                rcfile="$HOME/$rc"
-                [ -f "$rcfile" ] && ! grep -qxF "$line" "$rcfile" && echo "$line" >> "$rcfile"
-            done
-            info "added $1 to PATH (~/.bashrc, ~/.zshrc, etc.)"
-            info "run 'source ~/.bashrc' or restart your shell to apply"
-            ;;
+        *:"$INSTALL_DIR":*) return ;;
     esac
+
+    marker="# === wuji-cli === "
+    line='export PATH="$HOME/.local/bin:$PATH"'
+    for rc in ".bashrc" ".zshrc" ".profile"; do
+        rcfile="$HOME/$rc"
+        [ -f "$rcfile" ] || continue
+        echo "$marker" >> "$rcfile"
+        echo "$line" >> "$rcfile"
+        echo "$marker" >> "$rcfile"
+    done
+    info "added $INSTALL_DIR to PATH (~/.bashrc, ~/.zshrc, etc.)"
+    info "run 'source ~/.bashrc' or restart your shell to apply"
 }
 
 # Detect system architecture
@@ -85,9 +92,9 @@ main() {
     success "wuji-cli installed to $DEST"
     success "run 'wuji --help' to get started"
 
-    # Ensure install dir is in PATH
+    # Ensure install dir is in PATH (check before we mutate PATH below)
+    ensure_path
     export PATH="$INSTALL_DIR:$PATH"
-    ensure_path "$INSTALL_DIR"
 }
 
 main
