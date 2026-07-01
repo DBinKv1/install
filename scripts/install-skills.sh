@@ -7,7 +7,6 @@ BASE_URL="https://github.com/${GITHUB_REPO}"
 
 INSTALL_DIR="$HOME/.agents/skills"
 
-TMP_DIR=$(mktemp -d)
 
 info()  { printf "\033[36m[INFO]\033[0m %s\n" "$*"; }
 warn()  { printf "\033[33m[WARN]\033[0m %s\n" "$*"; }
@@ -20,7 +19,10 @@ need_cmd git
 
 info "downloading skills from $BASE_URL"
 
+TMP_DIR=$(mktemp -d)
 git clone "$BASE_URL" "$TMP_DIR"  || error "failed to download $BASE_URL"
-mv "$TMP_DIR/skills/*" "$INSTALL_DIR/"  || error "failed to move skills to $INSTALL_DIR"
+
+mv "$TMP_DIR/install/skills/*" "$INSTALL_DIR/"  || error "failed to move skills to $INSTALL_DIR"
+rm -rf "$TMP_DIR"
 
 success "installed skills to $INSTALL_DIR"
