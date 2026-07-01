@@ -22,6 +22,7 @@ info "downloading skills from $BASE_URL"
 TMP_DIR=$(mktemp -d)
 git clone "$BASE_URL" "$TMP_DIR"  || error "failed to download $BASE_URL"
 
+mkdir -p "$INSTALL_DIR"
 mv "$TMP_DIR/skills/"* "$INSTALL_DIR/"  || error "failed to move skills to $INSTALL_DIR"
 rm -rf "$TMP_DIR"
 
