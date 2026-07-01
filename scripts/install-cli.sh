@@ -17,12 +17,18 @@ success() { printf "\033[32m[SUCCESS]\033[0m %s\n" "$*"; }
 
 need_cmd() { command -v "$1" >/dev/null 2>&1 || error "need '$1'"; }
 
-# Check if install dir is in PATH, warn if not
-check_path() {
+# Check if install dir is in PATH, append to shell config if not
+ensure_path() {
     case ":$PATH:" in
         *:"$1":*) ;;
         *)
-            warn "$1 is not in PATH, add 'export PATH=\"$1:\$PATH\"' to your shell config (~/.bashrc, ~/.zshrc, etc.)"
+            line="export PATH=\"$1:\$PATH\""
+            for rc in ".bashrc" ".zshrc" ".profile"; do
+                rcfile="$HOME/$rc"
+                [ -f "$rcfile" ] && ! grep -qxF "$line" "$rcfile" && echo "$line" >> "$rcfile"
+            done
+            info "added $1 to PATH (~/.bashrc, ~/.zshrc, etc.)"
+            info "run 'source ~/.bashrc' or restart your shell to apply"
             ;;
     esac
 }
@@ -79,8 +85,9 @@ main() {
     success "wuji-cli installed to $DEST"
     success "run 'wuji --help' to get started"
 
-    # Check if install dir is in PATH
-    check_path "$INSTALL_DIR"
+    # Ensure install dir is in PATH
+    export PATH="$INSTALL_DIR:$PATH"
+    ensure_path "$INSTALL_DIR"
 }
 
 main
