@@ -1,0 +1,387 @@
+{
+  "system": [
+    {
+      "label": "Environment",
+      "layer": "env",
+      "status": "pass"
+    },
+    {
+      "label": "Access",
+      "layer": "access",
+      "status": "pass"
+    }
+  ],
+  "devices": [
+    {
+      "sn": "WG1KA06260522012",
+      "children": [
+        {
+          "id": "emf_disconnect",
+          "label": "EMF disconnect check",
+          "layer": "device",
+          "status": "pass",
+          "summary": "sampled 100 valid frames, all 5 fingers normal",
+          "children": [
+            {
+              "label": "Thumb",
+              "layer": "device",
+              "status": "pass",
+              "summary": "100 frames all normal"
+            },
+            {
+              "label": "Index",
+              "layer": "device",
+              "status": "pass",
+              "summary": "100 frames all normal"
+            },
+            {
+              "label": "Middle",
+              "layer": "device",
+              "status": "pass",
+              "summary": "100 frames all normal"
+            },
+            {
+              "label": "Ring",
+              "layer": "device",
+              "status": "pass",
+              "summary": "100 frames all normal"
+            },
+            {
+              "label": "Pinky",
+              "layer": "device",
+              "status": "pass",
+              "summary": "100 frames all normal"
+            }
+          ],
+          "detail": {
+            "abnormal_fingers": [],
+            "analyzed_frames": 100,
+            "fingers": [
+              {
+                "abnormal_frames": 0,
+                "abnormal_ratio": 0.0,
+                "all_low_frames": 0,
+                "finger": "thumb",
+                "rx_row_frames": 0,
+                "status": "pass",
+                "total_frames": 100,
+                "tx_col_frames": 0,
+                "verdict": "Normal"
+              },
+              {
+                "abnormal_frames": 0,
+                "abnormal_ratio": 0.0,
+                "all_low_frames": 0,
+                "finger": "index",
+                "rx_row_frames": 0,
+                "status": "pass",
+                "total_frames": 100,
+                "tx_col_frames": 0,
+                "verdict": "Normal"
+              },
+              {
+                "abnormal_frames": 0,
+                "abnormal_ratio": 0.0,
+                "all_low_frames": 0,
+                "finger": "middle",
+                "rx_row_frames": 0,
+                "status": "pass",
+                "total_frames": 100,
+                "tx_col_frames": 0,
+                "verdict": "Normal"
+              },
+              {
+                "abnormal_frames": 0,
+                "abnormal_ratio": 0.0,
+                "all_low_frames": 0,
+                "finger": "ring",
+                "rx_row_frames": 0,
+                "status": "pass",
+                "total_frames": 100,
+                "tx_col_frames": 0,
+                "verdict": "Normal"
+              },
+              {
+                "abnormal_frames": 0,
+                "abnormal_ratio": 0.0,
+                "all_low_frames": 0,
+                "finger": "pinky",
+                "rx_row_frames": 0,
+                "status": "pass",
+                "total_frames": 100,
+                "tx_col_frames": 0,
+                "verdict": "Normal"
+              }
+            ],
+            "invalid_frames": 0,
+            "sampled_frames": 100
+          }
+        },
+        {
+          "id": "tactile_dead_pixel",
+          "label": "tactile dead-pixel check",
+          "layer": "device",
+          "status": "warn",
+          "summary": "sampled 100 valid frames: 0 dead pixels, 0 bad rows, 1 bad cols",
+          "fix": "tactile check result is for reference only; use Wuji Studio's full panel test for precision diagnosis",
+          "children": [
+            {
+              "label": "Thumb",
+              "layer": "device",
+              "status": "pass"
+            },
+            {
+              "label": "Index",
+              "layer": "device",
+              "status": "pass"
+            },
+            {
+              "label": "Middle",
+              "layer": "device",
+              "status": "pass"
+            },
+            {
+              "label": "Ring",
+              "layer": "device",
+              "status": "pass"
+            },
+            {
+              "label": "Pinky",
+              "layer": "device",
+              "status": "pass"
+            },
+            {
+              "label": "Palm",
+              "layer": "device",
+              "status": "pass"
+            },
+            {
+              "label": "Bad col 0",
+              "layer": "device",
+              "status": "warn",
+              "summary": "col 0 exceeds bad-line threshold"
+            }
+          ],
+          "detail": {
+            "analyzed_frames": 100,
+            "dead_cols": [0],
+            "dead_pixel_coords": [],
+            "dead_pixels": 0,
+            "dead_rows": [],
+            "detectors": [
+              {
+                "dead_pixels": [
+                  [17, 8],
+                  [18, 8],
+                  [19, 8],
+                  [21, 18]
+                ],
+                "description": "constant-high stuck pixel (sensor film jammed)",
+                "min_ratio": 0.8,
+                "name": "high",
+                "threshold": 0.5
+              },
+              {
+                "dead_pixels": [
+                  [4, 5],
+                  [4, 10],
+                  [4, 13],
+                  [4, 14],
+                  [5, 25],
+                  [6, 0],
+                  [6, 13],
+                  [7, 0],
+                  [7, 13],
+                  [7, 18],
+                  [8, 0],
+                  [8, 2],
+                  [9, 0],
+                  [9, 6],
+                  [10, 0],
+                  [10, 2],
+                  [10, 9],
+                  [11, 0],
+                  [11, 8],
+                  [12, 10],
+                  [12, 12],
+                  [12, 19],
+                  [12, 20],
+                  [13, 0],
+                  [13, 12],
+                  [14, 6],
+                  [14, 9],
+                  [14, 12],
+                  [14, 13],
+                  [14, 20],
+                  [15, 18],
+                  [15, 19],
+                  [15, 20],
+                  [16, 0],
+                  [16, 21],
+                  [17, 0],
+                  [17, 16],
+                  [17, 21],
+                  [17, 22],
+                  [18, 0],
+                  [18, 9],
+                  [18, 10],
+                  [18, 13],
+                  [19, 0],
+                  [19, 12],
+                  [19, 13],
+                  [20, 0],
+                  [20, 13],
+                  [20, 15],
+                  [21, 0],
+                  [22, 0],
+                  [22, 13],
+                  [22, 16],
+                  [23, 0]
+                ],
+                "description": "dead pixel (no output)",
+                "min_ratio": 0.8,
+                "name": "low",
+                "threshold": 0.001
+              },
+              {
+                "dead_pixels": [
+                  [10, 30],
+                  [12, 4],
+                  [15, 1],
+                  [17, 8],
+                  [18, 8],
+                  [19, 8],
+                  [20, 18],
+                  [21, 18],
+                  [22, 18]
+                ],
+                "description": "neighborhood outlier",
+                "min_ratio": 0.8,
+                "name": "outlier",
+                "threshold": 0.25
+              },
+              {
+                "dead_pixels": [
+                  [4, 10],
+                  [4, 13],
+                  [4, 14],
+                  [5, 25],
+                  [6, 0],
+                  [6, 13],
+                  [7, 0],
+                  [7, 13],
+                  [8, 0],
+                  [8, 2],
+                  [9, 0],
+                  [10, 0],
+                  [10, 2],
+                  [10, 9],
+                  [11, 0],
+                  [11, 8],
+                  [12, 7],
+                  [12, 10],
+                  [12, 19],
+                  [12, 20],
+                  [12, 26],
+                  [13, 0],
+                  [13, 12],
+                  [14, 9],
+                  [14, 12],
+                  [14, 13],
+                  [14, 18],
+                  [14, 20],
+                  [15, 18],
+                  [15, 19],
+                  [15, 20],
+                  [16, 0],
+                  [17, 0],
+                  [17, 16],
+                  [17, 21],
+                  [17, 22],
+                  [18, 0],
+                  [18, 9],
+                  [18, 10],
+                  [18, 13],
+                  [19, 0],
+                  [19, 9],
+                  [19, 12],
+                  [19, 13],
+                  [19, 21],
+                  [20, 0],
+                  [20, 13],
+                  [20, 15],
+                  [21, 0],
+                  [22, 0],
+                  [22, 13],
+                  [22, 16],
+                  [23, 0]
+                ],
+                "description": "frozen output (near-zero temporal std)",
+                "name": "stuck",
+                "threshold": 0.00001
+              }
+            ],
+            "invalid_frames": 0,
+            "p50": [
+              [null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0.158, 0.164, 0.0885, 0.1995, null, null, null, null, null, null, null, null, null, null, null, null, null],
+              [null, null, null, null, null, null, 0.299, 0.1195, 0.1335, 0.2775, null, null, null, 0.1515, 0.0935, 0.1235, 0.007, 0.127, 0.123, null, null, null, 0.146, 0.206, 0.2375, 0.037, null, null, null, null, null],
+              [null, null, null, null, null, 0.257, 0.118, 0.065, 0.022, 0.1125, 0.2765, null, null, 0.0975, 0.137, 0.097, 0.007, 0.0455, 0.006, null, null, 0.3015, 0.117, 0.0765, 0.0385, 0.1285, null, null, null, null, null],
+              [null, null, null, null, null, 0.071, 0.121, 0.024, 0.0615, 0.057, 0.0255, null, null, 0.01, 0.023, 0.0765, 0.0505, 0.015, 0.045, null, null, 0.0995, 0.1575, 0.004, 0.0705, 0.1655, null, null, null, null, null],
+              [null, null, null, null, null, 0.0, 0.0025, 0.0535, 0.057, 0.007, 0.0, null, null, 0.0, 0.0, 0.054, 0.0475, 0.0875, 0.032, null, null, 0.011, 0.0665, 0.003, 0.048, 0.0075, null, null, null, null, null],
+              [null, 0.1335, 0.1815, 0.3125, null, 0.031, 0.0395, 0.0085, 0.0455, 0.033, 0.0065, null, null, 0.0245, 0.039, 0.179, 0.031, 0.1385, 0.0075, null, null, 0.012, 0.0595, 0.0305, 0.04, 0.0, null, null, null, null, null],
+              [0.0, 0.122, 0.054, 0.073, 0.2445, 0.0805, 0.0185, 0.044, 0.0205, 0.0025, 0.0125, null, null, 0.0, 0.0165, 0.086, 0.0725, 0.02, 0.0025, null, null, 0.0605, 0.007, 0.0435, 0.0215, 0.0145, null, null, null, null, null],
+              [0.0, 0.06, 0.006, 0.0715, 0.2065, 0.065, 0.014, 0.0275, 0.0295, 0.067, 0.015, null, null, 0.0, 0.1045, 0.0825, 0.064, 0.109, 0.001, null, null, 0.031, 0.0025, 0.025, 0.011, 0.0115, null, null, null, null, null],
+              [0.0, 0.0315, 0.0, 0.0715, 0.256, 0.0675, 0.0295, 0.0155, 0.086, 0.083, 0.041, null, null, 0.026, 0.084, 0.076, 0.0525, 0.0635, 0.01, null, null, 0.008, 0.0115, 0.016, 0.0065, 0.076, null, null, null, null, null],
+              [0.0, 0.064, 0.012, 0.0575, 0.174, 0.0615, 0.0005, 0.0225, 0.0085, 0.031, 0.126, null, null, 0.008, 0.1045, 0.059, 0.0235, 0.065, 0.0125, null, null, 0.0115, 0.0305, 0.0475, 0.015, 0.007, 0.188, 0.3445, 0.0815, 0.142, null],
+              [0.0, 0.0595, 0.0, 0.0575, 0.17, 0.022, 0.0045, 0.014, 0.001, 0.0, 0.022, 0.0585, 0.094, 0.028, 0.0835, 0.079, 0.015, 0.054, 0.0185, 0.1455, 0.103, 0.0285, 0.054, 0.0055, 0.0125, 0.036, 0.39, 0.085, 0.1165, 0.05, 0.313],
+              [0.0, 0.0295, 0.0025, 0.0095, 0.134, 0.0335, 0.0025, 0.027, 0.0, 0.022, 0.041, 0.0315, 0.0305, 0.063, 0.057, 0.078, 0.03, 0.037, 0.082, 0.0185, 0.0025, 0.0445, 0.0555, 0.0965, 0.052, 0.0895, 0.296, 0.207, 0.144, 0.0605, 0.0365],
+              [0.001, 0.074, 0.0345, 0.021, 0.2945, 0.04, 0.0465, 0.0185, 0.0095, 0.003, 0.0, 0.0075, 0.0, 0.015, 0.018, 0.058, 0.0155, 0.074, 0.0135, 0.0, 0.0, 0.019, 0.012, 0.009, 0.0185, 0.1675, 0.122, 0.2065, 0.0915, 0.048, 0.1405],
+              [0.0, 0.0475, 0.177, 0.168, null, 0.0495, 0.0355, 0.0375, 0.0375, 0.0035, 0.004, 0.001, 0.0, 0.0615, 0.02, 0.0295, 0.016, 0.0035, 0.013, 0.021, 0.0235, 0.024, 0.0625, 0.028, 0.0285, null, 0.049, 0.115, 0.2795, 0.149, 0.1145],
+              [null, null, null, null, null, 0.19, 0.0005, 0.019, 0.0185, 0.0, 0.018, 0.016, 0.0, 0.0, 0.0175, 0.0395, 0.01, 0.006, 0.042, 0.008, 0.0, 0.0015, 0.003, 0.1045, 0.1285, null, 0.144, 0.1045, 0.206, 0.122, 0.15],
+              [0.024, 0.4195, null, null, null, 0.1625, 0.056, 0.0355, 0.0085, 0.0395, 0.038, 0.0325, 0.0365, 0.02, 0.047, 0.0185, 0.0415, 0.0075, 0.0, 0.0, 0.0, 0.022, 0.025, 0.0855, 0.108, null, 0.1365, 0.1025, 0.1895, 0.096, 0.141],
+              [0.0, null, null, null, null, 0.1385, 0.0425, 0.0705, 0.0785, 0.012, 0.0435, 0.1685, 0.204, 0.018, 0.02, 0.0045, 0.062, 0.05, 0.0385, 0.069, 0.0045, 0.0005, 0.025, 0.1405, 0.1, 0.135, 0.0825, 0.0765, 0.178, 0.09, 0.127],
+              [0.0, null, null, null, null, 0.121, 0.1425, 0.231, 0.808, 0.0365, 0.02, 0.055, 0.0435, 0.033, 0.0205, 0.0035, 0.0, 0.0685, 0.0125, 0.061, 0.01, 0.0, 0.0, 0.1885, 0.073, 0.1215, 0.1855, 0.124, 0.0445, 0.353, null],
+              [0.0, null, null, null, null, 0.103, 0.0435, 0.1005, 0.8095, 0.0, 0.0, 0.0155, 0.019, 0.0, 0.0665, 0.0165, 0.0575, 0.0845, 0.0215, 0.14, 0.0045, 0.0185, 0.006, 0.123, 0.036, 0.113, null, 0.209, 0.188, null, null],
+              [0.0, null, null, null, null, 0.1625, 0.083, 0.19, 0.6435, 0.042, 0.001, 0.0215, 0.0, 0.0, 0.018, 0.0045, 0.0195, 0.059, 0.1455, 0.0845, 0.0335, 0.074, 0.0505, 0.1675, 0.1275, 0.308, null, null, null, null, null],
+              [0.0, null, null, null, null, 0.0645, 0.0665, 0.0265, 0.14, 0.0015, 0.0165, 0.036, 0.0395, 0.0, 0.015, 0.0, 0.0035, 0.0175, 0.4445, 0.129, 0.0255, 0.0385, 0.072, 0.1085, 0.1965, 0.2425, null, null, null, null, null],
+              [0.0, null, null, null, null, 0.0825, 0.0155, 0.0315, 0.006, 0.054, 0.055, 0.0525, 0.0025, 0.004, 0.0455, 0.0315, 0.002, 0.029, 0.7835, 0.156, 0.0935, 0.185, 0.107, 0.113, null, null, null, null, null, null, null],
+              [0.0, null, null, null, null, 0.039, 0.009, 0.019, 0.0045, 0.0285, 0.017, 0.0225, 0.0025, 0.0, 0.0195, 0.0165, 0.0, 0.0095, 0.467, 0.101, 0.054, 0.1075, 0.071, null, null, null, null, null, null, null, null],
+              [0.0, null, null, null, null, 0.101, 0.0135, 0.008, 0.0235, 0.094, 0.1435, 0.1185, 0.0515, 0.0195, 0.0685, 0.011, 0.0265, 0.066, 0.041, 0.139, 0.076, 0.066, 0.0755, null, null, null, null, null, null, null, null]
+            ],
+            "per_zone_stats": [
+              {
+                "dead_pixels": 0,
+                "zone": "thumb"
+              },
+              {
+                "dead_pixels": 0,
+                "zone": "index"
+              },
+              {
+                "dead_pixels": 0,
+                "zone": "middle"
+              },
+              {
+                "dead_pixels": 0,
+                "zone": "ring"
+              },
+              {
+                "dead_pixels": 0,
+                "zone": "pinky"
+              },
+              {
+                "dead_pixels": 0,
+                "zone": "palm"
+              }
+            ],
+            "sampled_frames": 100,
+            "used_min_ratio_persist": 0.8,
+            "used_threshold_high": 0.5,
+            "used_threshold_low": 0.001,
+            "used_threshold_outlier": 0.25
+          }
+        }
+      ]
+    }
+  ]
+}
