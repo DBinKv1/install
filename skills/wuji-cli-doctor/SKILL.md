@@ -4,7 +4,7 @@ description: "Run health self-checks on Wuji devices with wuji doctor: EMF disco
 compatibility: Requires Wuji CLI installed with the wuji executable available on PATH.
 metadata:
   author: wuji-technology
-  version: "2026.9.14"
+  version: "2026.9.20"
   requires:
     bins:
       - wuji

@@ -4,7 +4,7 @@ description: "Use when a customer needs guided troubleshooting or a support repo
 compatibility: Requires Wuji CLI installed with the wuji executable available on PATH, access to local logs and ZIP contents, and wuji-cli-doctor and wuji-cli-logs skills. Online issue matching requires access to docs.wuji.tech.
 metadata:
   author: wuji-technology
-  version: "2026.9.14"
+  version: "2026.9.20"
   requires:
     bins:
       - wuji

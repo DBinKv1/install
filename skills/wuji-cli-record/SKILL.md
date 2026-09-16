@@ -3,7 +3,7 @@ name: wuji-cli-record
 description: "Use this skill to record an already running Wuji Glove to Hand 2 teleoperation session, inspect managed recording history, or export a selected recording into a support bundle with the wuji CLI. Do not use it to start teleoperation or publish control commands."
 metadata:
   author: wuji-technology
-  version: "2026.9.14"
+  version: "2026.9.20"
   cliHelp: "wuji record --help"
 compatibility: Requires the wuji CLI binary.
 ---

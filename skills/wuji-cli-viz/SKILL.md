@@ -4,7 +4,7 @@ description: "Visualize live Wuji Hand 2 or Wuji Glove data with the official Re
 compatibility: Requires Wuji CLI installed with the wuji executable available on PATH.
 metadata:
   author: wuji-technology
-  version: "2026.9.14"
+  version: "2026.9.20"
   requires:
     bins:
       - wuji

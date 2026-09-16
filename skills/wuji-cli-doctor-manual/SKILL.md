@@ -3,7 +3,7 @@ name: wuji-cli-doctor-manual
 description: "Run an active Wuji Hand 2 thumb-opposition check. Use when a user needs to verify thumb-to-finger motion or investigate a possible hand mechanism issue."
 metadata:
   author: wuji-technology
-  version: "2026.9.14"
+  version: "2026.9.20"
   requires:
     bins: ["wuji"]
   cliHelp: "wuji doctor manual --help"
