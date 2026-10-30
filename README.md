@@ -36,7 +36,13 @@ uv run gray --to 2077.11.10
 uv run gray --dry-run
 ```
 
-> 上游资产缓存在仓库内 `tmp/cache/`，已忽略跟踪。重复发版命中缓存，不再下载。
+生成过程中的路径：
+
+- `tmp/cache/v<上游版本>/`：下载得到的原始资产，已被 `.gitignore` 忽略。命中缓存则跳过下载，并按 API 声明的 sha256 校验。
+- `tmp/work/upstream/`：上游仓库浅克隆，后续运行只做 `git fetch` 到目标 tag。
+- `tmp/work/dist/`：补丁后的产物，同名文件直接覆盖。
+- `tmp/work/repo-preview/`：演练时由 `git archive` 展开的仓库预览。
+- 系统临时目录（`tempfile.TemporaryDirectory`，前缀 `wuji-gray-`）：单个资产解包、打补丁、重签的工作目录，打包完成后自动删除。日志会打印实际路径，例如 `/var/folders/.../wuji-gray-tf_7ura8`。
 
 > **注意（破坏性清理）**：脚本正式运行会**永久删除历史所有旧 Release 与旧 Tag**，并用上游最新内容完全覆盖本地 `skills/` 与 `scripts/`。
 
@@ -71,6 +77,7 @@ HOME=$(mktemp -d) WUJI_UPDATE_REPO=DBinKv1/install ./target/debug/wuji update --
 ```bash
 # 1. 准备隔离主目录与副本二进制
 TEST_DIR=$(mktemp -d)
+echo $TEST_DIR
 cp ./target/debug/wuji "$TEST_DIR/wuji"
 
 # 2. 在完全隔离的环境下执行升级
@@ -101,6 +108,7 @@ rm -rf "$TEST_DIR"
 & {
     $TestDir = Join-Path $env:TEMP "wuji-gray-test"
     New-Item -ItemType Directory -Force -Path $TestDir | Out-Null
+    Write-Output "TestDir=$TestDir"
     Copy-Item .\target\debug\wuji.exe (Join-Path $TestDir "wuji.exe")
 
     try {
@@ -130,6 +138,13 @@ rm -rf "$TEST_DIR"
     }
 }
 ```
+
+> **SSH 连 Windows 时注意**：ConPTY 把粘贴内容里的换行转成 `Ctrl+Enter`，pwsh 默认把该组合键绑为 `InsertLineAbove`，于是多行粘贴会倒序并停在续行状态。另外 PowerShell 不把 `Ctrl+D`（0x04）当作 EOF，未绑定该键，所以它不能退出会话。在远端 `$PROFILE` 加两行：第一行修正粘贴倒序，第二行让 `Ctrl+D` 在空行时退出。
+>
+> ```powershell
+> if ($env:SSH_CONNECTION) { Set-PSReadLineKeyHandler -Chord Ctrl+Enter -Function AddLine }
+> if ($env:SSH_CONNECTION) { Set-PSReadLineKeyHandler -Chord Ctrl+d -Function DeleteCharOrExit }
+> ```
 
 ---
 

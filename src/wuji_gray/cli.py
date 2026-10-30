@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 import httpx
@@ -31,8 +32,18 @@ from wuji_gray.assets import (
     unpack,
 )
 
-# logger.remove()
-# logger.add(sys.stderr, level="INFO", format="<level>{level: <7}</level> {message}")
+LEVEL_COLORS = {"DEBUG": "cyan", "INFO": "cyan", "WARNING": "yellow", "ERROR": "red"}
+
+
+def setup_logging() -> None:
+    """输出 [LEVEL] 消息：标签加粗着色，消息只着色。颜色仅在终端生效。"""
+    logger.remove()
+    for name, color in LEVEL_COLORS.items():
+        logger.level(name, color=f"<{color}>")
+    logger.add(sys.stderr, level="INFO", format="<level><bold>[{level}]</bold> {message}</level>")
+
+
+setup_logging()
 
 console = Console()
 VERSION_LINE = re.compile(r'^(\s*version:\s*")[^"]*(")$', re.MULTILINE)
@@ -187,29 +198,43 @@ class GrayRelease:
     def patch_all_assets(self, src_dir: Path) -> None:
         dst_dir = self.work_dir / "dist"
         dst_dir.mkdir(parents=True, exist_ok=True)
-        for archive in sorted(path for path in src_dir.iterdir() if path.is_file()):
-            self._patch_one(archive, dst_dir)
+        archives = sorted(path for path in src_dir.iterdir() if path.is_file())
+        logger.info("开始处理 {} 个资产", len(archives))
+        for index, archive in enumerate(archives, 1):
+            self._patch_one(archive, dst_dir, index, len(archives))
         logger.info("资产解包、补丁、重签与重新打包完成")
 
-    def _patch_one(self, archive: Path, dst_dir: Path) -> None:
+    def _patch_one(self, archive: Path, dst_dir: Path, index: int, total: int) -> None:
         member = archive_member(archive)
         if self.real not in archive.name:
             die(f"资产名未包含上游版本号 {self.real}: {archive.name}")
         out_path = dst_dir / archive.name.replace(self.real, self.target)
+        label = f"[{index}/{total}] {archive.name}"
+        started = time.perf_counter()
 
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory(prefix="wuji-gray-") as tmp:
             binary = Path(tmp) / member
+            logger.info("{} 解包到 {}", label, tmp)
             unpack(archive, member, binary)
-            data, _ = patch_bytes(binary.read_bytes(), self.real, self.target)
+            data, hits = patch_bytes(binary.read_bytes(), self.real, self.target)
             binary.write_bytes(data)
+            logger.info("{} 版本串 {} -> {}，命中 {} 处", label, self.real, self.target, hits)
             if is_macho(binary):
                 binary.chmod(0o755)
+                logger.info("{} 重签 Mach-O", label)
                 sign_and_verify(binary)
+                logger.info("{} 重签完成", label)
             if sys.platform == "darwin" and "aarch64-apple-darwin" in archive.name:
                 probe = run_cmd([str(binary), "--version"], check=False)
                 if probe.returncode != 0 or self.target not in probe.stdout:
                     die(f"补丁后的二进制无法自报目标版本: {probe.stderr.strip()}")
+                logger.info("{} 自报版本校验通过", label)
+            logger.info("{} 重新打包", label)
             repack(out_path, member, binary)
+
+        logger.info(
+            "{} 打包完成 {} 字节，用时 {:.1f}s", label, out_path.stat().st_size, time.perf_counter() - started
+        )
 
         self.manifest.append(
             {
