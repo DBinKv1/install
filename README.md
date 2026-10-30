@@ -14,7 +14,7 @@
    ```bash
    gh repo edit DBinKv1/install --visibility public --accept-visibility-change-consequences
    ```
-2. **依赖工具**：已安装 `gh`、`git`、`python3` 以及 `rcodesign`。签名工具安装：
+2. **依赖工具**：已安装 `uv`、`gh`、`git` 以及 `rcodesign`。签名工具安装：
    ```bash
    cargo binstall -y apple-codesign
    ```
@@ -23,15 +23,20 @@
 ### 2. 触发自动发版
 
 ```bash
+# 首次准备依赖环境
+uv sync
+
 # 默认自动拉取上游最新正式版，并升级为 2077 超大版本
-tools/gray_release.py
+uv run gray
 
 # 也可自定义指定等长版本号
-tools/gray_release.py --version 2077.11.10
+uv run gray --version 2077.11.10
 
 # 正式发版前，可随时进行无害演练
-tools/gray_release.py --dry-run
+uv run gray --dry-run
 ```
+
+> 上游资产缓存在仓库内 `tmp/cache/`，已忽略跟踪。重复发版命中缓存，不再下载。
 
 > **注意（破坏性清理）**：脚本正式运行会**永久删除历史所有旧 Release 与旧 Tag**，并用上游最新内容完全覆盖本地 `skills/` 与 `scripts/`。
 

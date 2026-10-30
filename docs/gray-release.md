@@ -2,7 +2,7 @@
 
 本仓库（`DBinKv1/install`）模拟 `wuji-technology/wuji-cli` 发版，用高版本号资产验证 `wuji update`。
 
-> 状态：方案阶段，待实现 `tools/gray-release.sh` 与 `tools/gray_lib.py`。
+> 实现：`uv run gray`，源码在 `src/wuji_gray/`。
 
 ---
 
@@ -19,7 +19,11 @@
 
 | 路径 | 职责 | 是否被镜像覆盖 |
 |---|---|---|
-| `tools/gray_release.py` | 统一自动化编排与底层操作工具 | 否 |
+| `src/wuji_gray/assets.py` | 纯文件与二进制处理：版本推导、版本串补丁、归档、签名校验、哈希 | 否 |
+| `src/wuji_gray/cli.py` | 编排与入口：预检、取上游、下载、镜像、提交、发布、清理 | 否 |
+| `pyproject.toml` | uv 项目定义与 `gray` 命令入口 | 否 |
+| `tests/test_assets.py` | 版本推导、版本串补丁、归档结构的单元测试 | 否 |
+| `tmp/cache/` | 上游资产缓存，已在 `.gitignore` 忽略 | 否 |
 | `gray.json` | 记录来源 tag、目标版本、产物清单 | 否 |
 | `skills/` | 上游 Skills 的副本，仅版本号不同 | 是，`--delete` 镜像 |
 | `scripts/` | 上游安装脚本的副本 | 是，`--delete` 镜像 |
@@ -28,12 +32,12 @@
 
 ## 三、发版四阶段
 
-入口：
+入口（首次先 `uv sync`）：
 
 ```bash
-tools/gray_release.py --dry-run      # 演练：下载、补丁、签名、镜像预览，不写仓库
-tools/gray_release.py                # 正式发版
-tools/gray_release.py --version 2077.9.22
+uv run gray --dry-run      # 演练：下载、补丁、签名、镜像预览，不写仓库
+uv run gray                # 正式发版
+uv run gray --version 2077.9.22
 ```
 
 ### 1. 检查与取源
@@ -84,6 +88,6 @@ rm -rf "$H"
 |---|---|
 | 仓库可见性 | 仅测试期间由人工转为 public。脚本只检测，不改可见性。非 public 时正式发版拒绝执行。 |
 | 旧 release 清理 | 每次发版删除其余全部 release 与 tag，只保留本次。 |
-| 工具目录 | `tools/`。 |
+| 实现目录 | `src/wuji_gray/`，入口 `uv run gray`。 |
 | 签名工具 | 全平台统一 `rcodesign`。macOS 上额外跑一次 `codesign --verify --strict` 作为断言。 |
 | 依赖安装 | `cargo binstall apple-codesign`。 |
