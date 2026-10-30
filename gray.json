@@ -1,0 +1,28 @@
+{
+  "source_repo": "wuji-technology/wuji-cli",
+  "source_version": "2026.10.26",
+  "version": "2077.10.26",
+  "generated_at": "2026-10-30T10:04:45Z",
+  "assets": [
+    {
+      "name": "wuji_2077.10.26_aarch64-apple-darwin.tar.gz",
+      "size": 30640903,
+      "sha256": "2cf533ea142fc07641e2a573798becb6d54a80a503aee9f20357e13b80d5519c"
+    },
+    {
+      "name": "wuji_2077.10.26_aarch64-unknown-linux-gnu.tar.gz",
+      "size": 30405128,
+      "sha256": "02c183fa0529e56012791ae6d34a733786e6cc6ecb66d7d6db305daefc8c5e1f"
+    },
+    {
+      "name": "wuji_2077.10.26_x86_64-pc-windows-msvc.zip",
+      "size": 28246466,
+      "sha256": "a3038767649805ca73d014b5a36d4992e5e4f7f50acd7ac1c176809aec7a2586"
+    },
+    {
+      "name": "wuji_2077.10.26_x86_64-unknown-linux-gnu.tar.gz",
+      "size": 30711590,
+      "sha256": "d30c52192dfebd2dfb6743e6b91aab093aa1fc0e5383dca1c553665115b6af4a"
+    }
+  ]
+}
