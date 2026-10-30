@@ -4,27 +4,46 @@
 
 ---
 
-## 快速指引：如何指向本仓库进行灰测
+## 阶段一：灰测仓库发版（生成灰测版本）
 
-> **说明**：以下第 2、3 节的验证命令需在 **`wuji-cli-dev` 代码仓库根目录**下执行。若尚未构建，请先执行 `cargo build` 生成 `./target/debug/wuji`。该 debug 二进制内置的当前版本号为 `2026.10.26`，低于灰测仓库的 `2077` 版本，正好用于触发升级。
+在对 CLI 进行升级测试之前，本仓库必须先有对应的灰测 Release 资产。
 
-### 1. 前置条件：切换为公开状态
+### 1. 前置条件
 
-灰测期间仓库必须处于公开状态。私有仓库会导致资产下载返回 404：
+1. **仓库公开状态**：发版前仓库必须为 Public，否则客户端下载会返回 404（演练模式不受此限）：
+   ```bash
+   gh repo edit DBinKv1/install --visibility public --accept-visibility-change-consequences
+   ```
+2. **依赖工具**：已安装 `gh`、`git`、`python3` 以及 `rcodesign`。签名工具安装：
+   ```bash
+   cargo binstall -y apple-codesign
+   ```
+3. **工作区状态**：必须在本仓库根目录下执行，且本地 git 工作区无未提交改动。
+
+### 2. 触发自动发版
 
 ```bash
-gh repo edit DBinKv1/install --visibility public --accept-visibility-change-consequences
+# 默认自动拉取上游最新正式版，并升级为 2077 超大版本
+tools/gray_release.py
+
+# 也可自定义指定等长版本号
+tools/gray_release.py --version 2077.11.10
+
+# 正式发版前，可随时进行无害演练
+tools/gray_release.py --dry-run
 ```
 
-测试完成后若需恢复私有：
-
-```bash
-gh repo edit DBinKv1/install --visibility private --accept-visibility-change-consequences
-```
+> **注意（破坏性清理）**：脚本正式运行会**永久删除历史所有旧 Release 与旧 Tag**，并用上游最新内容完全覆盖本地 `skills/` 与 `scripts/`。
 
 ---
 
-### 2. 检查更新（建议隔离主目录）
+## 阶段二：使用灰测源验证客户端升级
+
+灰测 Release 发布成功后，切换到 **`wuji-cli-dev` 代码仓库**进行客户端升级验证。
+
+> **说明**：以下验证命令均在 `wuji-cli-dev` 仓库根目录下执行。若尚未构建，先执行 `cargo build` 生成 `./target/debug/wuji`。其版本号为 `2026.10.26`，低于灰测仓库的 `2077` 版本，正好用于触发升级。
+
+### 1. 检查更新（建议隔离主目录）
 
 `wuji update --check` 会将检查结果写入主目录下的 `~/.wuji/cli/state.json`。为避免把灰测版本写入本机真实状态文件，建议在临时主目录下检查：
 
@@ -36,10 +55,10 @@ HOME=$(mktemp -d) WUJI_UPDATE_REPO=DBinKv1/install ./target/debug/wuji update --
 
 ---
 
-### 3. 执行端到端升级灰测
+### 2. 执行端到端升级灰测
 
 > **警告**：
-> 1. `wuji update` 执行的是**原地二进制替换**（Self-Replace）。务必将二进制拷贝到临时目录测试，切勿直接对 `~/.local/bin/wuji` 执行更新。
+> 1. `wuji update` 执行的是**原地二进制替换**（Self-Replace）。务必将二进制拷贝到临时目录测试，切勿直接对开发目录的 `./target/debug/wuji` 执行更新。
 > 2. 二进制升级成功后，`wuji` 会自动同步配套 Skills 并可能覆盖全局目录。务必严格隔离主目录。
 
 #### macOS / Linux
@@ -109,7 +128,7 @@ rm -rf "$TEST_DIR"
 
 ---
 
-### 4. 关于 Skills 同步的特别说明
+### 3. 关于 Skills 同步的特别说明
 
 `wuji update --skills` 的拉取目标是由**当前运行二进制自身的版本号**决定的：
 - 如果当前二进制已经是升级后的灰测版本（如 `2077.10.26`），执行 `--skills` 会匹配灰测仓库的 `v2077.10.26` 标签并成功拉取。
@@ -117,53 +136,16 @@ rm -rf "$TEST_DIR"
 
 ---
 
-## 快速跟进上游新版本 Release
+## 阶段三：测试完成清理
 
-当 `wuji-technology/wuji-cli` 发布了新的正式版时，只需一条命令即可将本灰测仓库一键对齐跟进。
-
-### 执行前置要求
-
-1. **仓库公开状态**：正式发版前仓库必须为 Public，否则脚本预检会被拒绝。演练模式（`--dry-run`）不受此限。
-2. **依赖工具**：需要已安装 `gh`、`git`、`python3` 以及 `rcodesign`。签名工具安装：
-   ```bash
-   cargo binstall -y apple-codesign
-   ```
-3. **工作区状态**：必须在仓库根目录执行，且本地 git 工作区无未提交改动。
-
-### 执行发版
+灰测完成后，如果需要恢复仓库为私有状态：
 
 ```bash
-# 进入本仓库根目录直接执行
-tools/gray_release.py
+gh repo edit DBinKv1/install --visibility private --accept-visibility-change-consequences
 ```
-
-> **注意（破坏性清理）**：脚本正式运行会**永久删除历史所有旧 Release 与旧 Tag**，并用上游最新内容完全覆盖本地 `skills/` 与 `scripts/`。
-脚本会自动执行全套流水线：
-1. **自动取源**：拉取公开仓最新的正式 Release 及其全平台资产。
-2. **自动升级为 2077 年超大版本**：保持月份和日期不变（如 `2026.11.10` 自动转化为 `2077.11.10`）。
-3. **二进制自动打补丁与签名**：对全平台二进制完成内部版本串等长替换，并使用 `rcodesign` 为 macOS arm64 重新做 Ad-hoc 签名与校验。
-4. **Skills 与脚本无缝镜像**：精确同步最新 Skills 与安装脚本，并自动改写 `metadata.version`。
-5. **自动发布与旧版本清理**：在 GitHub 上打标并发布最新 Release，并彻底清理历史旧 Release 和 Tag。
-
-如果需要自定义指定灰测版本号，支持通过 `--version` 参数显式传入（必须与上游版本等长）：
-
-```bash
-tools/gray_release.py --version 2077.11.10
-```
-
-执行前可随时通过 `--dry-run` 进行全流程无害演练：
-
-```bash
-tools/gray_release.py --dry-run
-```
-
-### 发版后自测
-
-脚本仅自动校验 Release 标签与资产文件数量。发版完成后，建议按第 3 节在临时隔离目录下执行一次实际的端到端 `update` 升级自测。
 
 ---
 
 ## 深入文档与设计细节
 
 详细技术设计、约束条件、签名验证与自测步骤见文档：[docs/gray-release.md](docs/gray-release.md)。
-
