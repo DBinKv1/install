@@ -31,8 +31,8 @@ from wuji_gray.assets import (
     unpack,
 )
 
-logger.remove()
-logger.add(sys.stderr, level="INFO", format="<level>{level: <7}</level> {message}")
+# logger.remove()
+# logger.add(sys.stderr, level="INFO", format="<level>{level: <7}</level> {message}")
 
 console = Console()
 VERSION_LINE = re.compile(r'^(\s*version:\s*")[^"]*(")$', re.MULTILINE)
@@ -47,7 +47,7 @@ class GrayRelease:
         self.explicit_version = explicit_version
         self.dry_run = dry_run
         self.repo_root = self._detect_repo_root()
-        self.work_dir = Path(tempfile.mkdtemp(prefix="wuji-gray-"))
+        self.work_dir = self.repo_root / "tmp" / "work"
         self.real = ""
         self.target = ""
         self.assets: list[dict] = []
@@ -58,9 +58,6 @@ class GrayRelease:
         if result.returncode != 0:
             die("当前目录不在 git 仓库内")
         return Path(result.stdout.strip())
-
-    def cleanup(self) -> None:
-        shutil.rmtree(self.work_dir, ignore_errors=True)
 
     def precheck(self) -> None:
         for tool in ("gh", "git", "rcodesign"):
@@ -225,21 +222,45 @@ class GrayRelease:
 
     def mirror_upstream(self, root: Path) -> None:
         upstream_dir = self.work_dir / "upstream"
-        run_cmd(
-            [
-                "git",
-                "-c",
-                "advice.detachedHead=false",
-                "clone",
-                "--quiet",
-                "--depth",
-                "1",
-                "--branch",
-                f"v{self.real}",
-                f"https://github.com/{self.upstream}.git",
-                str(upstream_dir),
-            ]
-        )
+        tag = f"v{self.real}"
+        ready = False
+        if (upstream_dir / ".git").exists():
+            fetch = run_cmd(
+                [
+                    "git",
+                    "-C",
+                    str(upstream_dir),
+                    "fetch",
+                    "--quiet",
+                    "--depth",
+                    "1",
+                    "origin",
+                    f"+refs/tags/{tag}:refs/tags/{tag}",
+                ],
+                check=False,
+            )
+            if fetch.returncode == 0:
+                run_cmd(["git", "-C", str(upstream_dir), "checkout", "--quiet", "--force", tag])
+                logger.info("上游克隆已更新到 {}", tag)
+                ready = True
+            else:
+                shutil.rmtree(upstream_dir, ignore_errors=True)
+        if not ready:
+            run_cmd(
+                [
+                    "git",
+                    "-c",
+                    "advice.detachedHead=false",
+                    "clone",
+                    "--quiet",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    tag,
+                    f"https://github.com/{self.upstream}.git",
+                    str(upstream_dir),
+                ]
+            )
         for name in ("skills", "scripts"):
             self._mirror_dir(upstream_dir / name, root / name, name)
         self._bump_skills(root)
@@ -308,7 +329,8 @@ class GrayRelease:
             f"- The skills content used by `wuji update --skills` lives at tag `v{self.target}`.\n",
             encoding="utf-8",
         )
-        assets = [str(path) for path in sorted((self.work_dir / "dist").iterdir()) if path.is_file()]
+        dist = self.work_dir / "dist"
+        assets = [str(dist / item["name"]) for item in self.manifest]
         run_cmd(
             [
                 "gh",
@@ -367,12 +389,29 @@ class GrayRelease:
         for item in self.manifest:
             logger.info("[dry-run] 产物 {} ({} 字节)", item["name"], item["size"])
 
+    def report_next_steps(self) -> None:
+        """打印客户端侧的通道检查命令，隔离 HOME 避免污染。"""
+        logger.info('快速检查：HOME=$(mktemp -d) WUJI_UPDATE_REPO={} ./target/debug/wuji update --check', self.fixture)
+
+    def report_visibility(self) -> None:
+        """收尾提醒仓库可见性：公开后要记得关回私有。"""
+        visibility = run_cmd(
+            ["gh", "repo", "view", self.fixture, "--json", "visibility", "--jq", ".visibility"]
+        ).stdout.strip()
+        if visibility == "PUBLIC":
+            logger.warning("仓库 {} 当前 public，灰测结束后记得改回 private", self.fixture)
+        else:
+            logger.warning("仓库 {} 当前 {}，wuji update 下载会 404，需先转为 public", self.fixture, visibility)
+
     def run(self) -> int:
         self.precheck()
         self.resolve_versions()
         self.patch_all_assets(self.fetch_assets())
+        logger.info("补丁产物 {}", self.work_dir / "dist")
         if self.dry_run:
             self.preview()
+            self.report_visibility()
+            self.report_next_steps()
             return 0
         self.mirror_upstream(self.repo_root)
         self.write_gray_json(self.repo_root)
@@ -380,6 +419,8 @@ class GrayRelease:
         self.publish_release()
         self.prune_old_releases()
         self.verify_release()
+        self.report_visibility()
+        self.report_next_steps()
         return 0
 
 
@@ -400,8 +441,6 @@ def main(
     except GrayError as error:
         logger.error("{}", error)
         raise typer.Exit(code=1) from error
-    finally:
-        runner.cleanup()
     if code:
         raise typer.Exit(code=code)
 
