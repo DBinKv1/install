@@ -30,7 +30,7 @@ uv sync
 uv run gray
 
 # 也可自定义指定等长版本号
-uv run gray --version 2077.11.10
+uv run gray --to 2077.11.10
 
 # 正式发版前，可随时进行无害演练
 uv run gray --dry-run

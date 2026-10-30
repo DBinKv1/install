@@ -16,6 +16,7 @@ from loguru import logger
 from rich.console import Console
 from rich.progress import BarColumn, DownloadColumn, Progress, TaskID, TextColumn, TransferSpeedColumn
 
+from wuji_gray import __version__
 from wuji_gray.assets import (
     GrayError,
     archive_member,
@@ -96,7 +97,13 @@ class GrayRelease:
             die("上游 release 中未找到任何资产文件")
         cache_dir = self.cache_dir
         cache_dir.mkdir(parents=True, exist_ok=True)
-        pending = [asset for asset in self.assets if not self._cached(cache_dir, asset)]
+        pending = []
+        for asset in self.assets:
+            if self._cached(cache_dir, asset):
+                continue
+            # 残缺或摘要不符的旧文件必须先清掉，否则续传会把新旧字节拼在一起。
+            (cache_dir / asset["name"]).unlink(missing_ok=True)
+            pending.append(asset)
         if not pending:
             logger.info("{} 个资产命中本地缓存 {}", len(self.assets), cache_dir)
             return cache_dir
@@ -116,14 +123,17 @@ class GrayRelease:
             asyncio.run(self._download_all(pending, cache_dir, headers, progress))
         for asset in self.assets:
             if not self._cached(cache_dir, asset):
-                die(f"{asset['name']} 下载大小与 API 声明不一致")
+                die(f"{asset['name']} 下载后校验失败（大小或 sha256 不符）")
         logger.info("已下载 {} 个资产到 {}", len(pending), cache_dir)
         return cache_dir
 
     @staticmethod
     def _cached(cache_dir: Path, asset: dict) -> bool:
         path = cache_dir / asset["name"]
-        return path.exists() and path.stat().st_size == asset["size"]
+        if not path.exists() or path.stat().st_size != asset["size"]:
+            return False
+        declared = (asset.get("digest") or "").removeprefix("sha256:")
+        return not declared or sha256_file(path) == declared
 
     async def _download_all(
         self, pending: list[dict], cache_dir: Path, headers: dict[str, str], progress: Progress
@@ -133,10 +143,10 @@ class GrayRelease:
         async with httpx.AsyncClient(follow_redirects=True, timeout=timeout) as client:
             jobs = []
             for asset in pending:
-                task = progress.add_task(asset["name"], total=asset["size"])
-                jobs.append(
-                    self._download_one(client, semaphore, headers, asset, cache_dir / asset["name"], task, progress)
-                )
+                path = cache_dir / asset["name"]
+                have = path.stat().st_size if path.exists() else 0
+                task = progress.add_task(asset["name"], total=asset["size"], completed=have)
+                jobs.append(self._download_one(client, semaphore, headers, asset, path, task, progress))
             await asyncio.gather(*jobs)
 
     async def _download_one(
@@ -173,7 +183,7 @@ class GrayRelease:
                                 progress.update(task, advance=len(chunk))
                 except httpx.HTTPError as error:
                     last_error = str(error)
-                if dest.stat().st_size >= total:
+                if dest.exists() and dest.stat().st_size >= total:
                     return
         die(f"下载失败 {asset['name']}: {last_error}")
 
@@ -375,12 +385,16 @@ class GrayRelease:
 
 def main(
     dry_run: bool = typer.Option(False, "--dry-run", help="演练模式：下载、补丁、签名与预览，不修改仓库与远程"),
-    version: str | None = typer.Option(None, "--version", help="显式指定目标版本号，长度必须等于上游真实版本"),
+    target_version: str | None = typer.Option(None, "--to", help="显式指定目标版本号，长度必须等于上游真实版本"),
     upstream: str = typer.Option("wuji-technology/wuji-cli", envvar="GRAY_UPSTREAM_REPO", help="上游公开仓库"),
     fixture: str = typer.Option("DBinKv1/install", envvar="GRAY_FIXTURE_REPO", help="目标灰测仓库"),
+    show_version: bool = typer.Option(False, "--version", is_eager=True, help="显示工具版本并退出"),
 ) -> None:
     """Wuji CLI 灰测仓库发版工具。"""
-    runner = GrayRelease(upstream=upstream, fixture=fixture, explicit_version=version, dry_run=dry_run)
+    if show_version:
+        typer.echo(f"gray {__version__}")
+        raise typer.Exit()
+    runner = GrayRelease(upstream=upstream, fixture=fixture, explicit_version=target_version, dry_run=dry_run)
     try:
         code = runner.run()
     except GrayError as error:
