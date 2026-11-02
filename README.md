@@ -6,19 +6,19 @@
 
 ## 阶段一：灰测仓库发版（生成灰测版本）
 
-在对 CLI 进行升级测试之前，本仓库必须先有对应的灰测 Release 资产。
+升级测试前，本仓库必须有对应的灰测 Release 资产。
 
 ### 1. 前置条件
 
-1. **仓库公开状态**：发版前仓库必须为 Public，否则客户端下载会返回 404（演练模式不受此限）：
+1. **仓库公开状态**：发版前仓库必须为 Public。仓库为私有状态时，客户端下载返回 404。演练模式不受此限。改为 Public：
    ```bash
    gh repo edit DBinKv1/install --visibility public --accept-visibility-change-consequences
    ```
-2. **依赖工具**：已安装 `uv`、`gh`、`git` 以及 `rcodesign`。签名工具安装：
+2. **依赖工具**：安装 `uv`、`gh`、`git`、`rcodesign`。安装签名工具：
    ```bash
    cargo binstall -y apple-codesign
    ```
-3. **工作区状态**：必须在本仓库根目录下执行，且本地 git 工作区无未提交改动。
+3. **工作区状态**：必须在本仓库根目录执行。本地 git 工作区必须没有未提交改动。
 
 ### 2. 触发自动发版
 
@@ -36,43 +36,47 @@ uv run gray --to 2077.11.10
 uv run gray --dry-run
 ```
 
-生成过程中的路径：
+生成过程使用的路径：
 
 - `tmp/cache/v<上游版本>/`：下载得到的原始资产，已被 `.gitignore` 忽略。命中缓存则跳过下载，并按 API 声明的 sha256 校验。
 - `tmp/work/upstream/`：上游仓库浅克隆，后续运行只做 `git fetch` 到目标 tag。
 - `tmp/work/dist/`：补丁后的产物，同名文件直接覆盖。
 - `tmp/work/repo-preview/`：演练时由 `git archive` 展开的仓库预览。
-- 系统临时目录（`tempfile.TemporaryDirectory`，前缀 `wuji-gray-`）：单个资产解包、打补丁、重签的工作目录，打包完成后自动删除。日志会打印实际路径，例如 `/var/folders/.../wuji-gray-tf_7ura8`。
+- 系统临时目录（`tempfile.TemporaryDirectory`，前缀 `wuji-gray-`）：单个资产解包、打补丁、重签使用。打包完成后自动删除。日志会打印实际路径，例如 `/var/folders/.../wuji-gray-tf_7ura8`。
 
-> **注意（破坏性清理）**：脚本正式运行会**永久删除历史所有旧 Release 与旧 Tag**，并用上游最新内容完全覆盖本地 `skills/` 与 `scripts/`。
+**警告**：正式发版会**永久删除全部旧 Release 与旧 Tag**。上游内容会完全覆盖本地 `skills/` 与 `scripts/`。
 
 ---
 
 ## 阶段二：使用灰测源验证客户端升级
 
-灰测 Release 发布成功后，切换到 **`wuji-cli-dev` 代码仓库**进行客户端升级验证。
+灰测 Release 发布后，在 **`wuji-cli-dev` 代码仓库**验证客户端升级。
 
-> **说明**：以下验证命令均在 `wuji-cli-dev` 仓库根目录下执行。若尚未构建，先执行 `cargo build` 生成 `./target/debug/wuji`。其版本号为 `2026.10.26`，低于灰测仓库的 `2077` 版本，正好用于触发升级。
+> **说明**：以下命令在 `wuji-cli-dev` 仓库根目录执行。如果尚未构建，先执行 `cargo build`。生成的文件为 `./target/debug/wuji`，版本 `2026.10.26`，低于灰测仓库的 `2077` 版本，可以触发升级。
 
 ### 1. 检查更新（建议隔离主目录）
 
-`wuji update --check` 会将检查结果写入主目录下的 `~/.wuji/cli/state.json`。为避免把灰测版本写入本机真实状态文件，建议在临时主目录下检查：
+`wuji update --check` 会写入 `~/.wuji/cli/state.json`。如果不想改动本机状态文件，在临时主目录运行：
 
 ```bash
 HOME=$(mktemp -d) WUJI_UPDATE_REPO=DBinKv1/install ./target/debug/wuji update --check
 ```
 
-输出若显示发现新版本（如 `2077.10.26`），且 Release URL 指向 `DBinKv1/install`，说明灰测通道连通正常。
+如果输出显示新版本（如 `2077.10.26`），且 Release URL 指向 `DBinKv1/install`，灰测通道已连通。
 
 ---
 
 ### 2. 执行端到端升级灰测
 
 > **警告**：
-> 1. `wuji update` 执行的是**原地二进制替换**（Self-Replace）。务必将二进制拷贝到临时目录测试，切勿直接对开发目录的 `./target/debug/wuji` 执行更新。
-> 2. 二进制升级成功后，`wuji` 会自动同步配套 Skills 并可能覆盖全局目录。务必严格隔离主目录。
+> 1. `wuji update` 执行**原地二进制替换**（Self-Replace）。必须先把二进制拷贝到临时目录。禁止对开发目录的 `./target/debug/wuji` 执行更新。
+> 2. 升级成功后，`wuji` 会同步配套 Skills，可能覆盖全局目录。必须隔离主目录。
 
-#### macOS / Linux
+#### 方式一：一键测试
+
+一次执行完，结束后自动清理临时目录，适合单次验证。
+
+**macOS / Linux**
 
 ```bash
 # 1. 准备隔离主目录与副本二进制
@@ -100,7 +104,7 @@ WUJI_UPDATE_REPO=DBinKv1/install \
 rm -rf "$TEST_DIR"
 ```
 
-#### Windows (PowerShell)
+**Windows (PowerShell)**
 
 在独立的作用域中执行，避免污染当前 PowerShell 会话的环境变量：
 
@@ -139,26 +143,125 @@ rm -rf "$TEST_DIR"
 }
 ```
 
-> **SSH 连 Windows 时注意**：ConPTY 把粘贴内容里的换行转成 `Ctrl+Enter`，pwsh 默认把该组合键绑为 `InsertLineAbove`，于是多行粘贴会倒序并停在续行状态。另外 PowerShell 不把 `Ctrl+D`（0x04）当作 EOF，未绑定该键，所以它不能退出会话。在远端 `$PROFILE` 加两行：第一行修正粘贴倒序，第二行让 `Ctrl+D` 在空行时退出。
+> **SSH 连 Windows 时注意**：ConPTY 把粘贴内容里的换行转成 `Ctrl+Enter`。pwsh 默认把该组合键绑为 `InsertLineAbove`，所以多行粘贴会倒序，并停在续行状态。另外，PowerShell 不把 `Ctrl+D`（0x04）当作 EOF，也没有绑定该键，所以它不能退出会话。在远端 `$PROFILE` 加两行：第一行修正粘贴倒序，第二行让 `Ctrl+D` 在空行时退出。
 >
 > ```powershell
 > if ($env:SSH_CONNECTION) { Set-PSReadLineKeyHandler -Chord Ctrl+Enter -Function AddLine }
 > if ($env:SSH_CONNECTION) { Set-PSReadLineKeyHandler -Chord Ctrl+d -Function DeleteCharOrExit }
 > ```
 
+#### 方式二：装一个指向测试环境的 `wuji`
+
+以下函数只在调用期间设置隔离主目录与灰测源，返回后自动还原。同一会话里的 `git`、`gh`、`ssh` 不受影响。适合反复执行 `wuji update`、`wuji update --skills`、`wuji --version`。
+
+**macOS / Linux**
+
+```bash
+export WUJI_TEST_DIR=$(mktemp -d)
+cp ./target/debug/wuji "$WUJI_TEST_DIR/wuji"
+wuji() {
+    printf '\n\033[31m[灰测] %s\033[0m\n\n' "$WUJI_TEST_DIR/wuji" >&2
+    HOME="$WUJI_TEST_DIR" USERPROFILE="$WUJI_TEST_DIR" \
+    WUJI_UPDATE_REPO=DBinKv1/install WUJI_TELEMETRY_DISABLE=1 \
+    "$WUJI_TEST_DIR/wuji" "$@"
+}
+```
+
+**Windows (PowerShell)**
+
+```powershell
+$env:WUJI_TEST_DIR = Join-Path $env:TEMP "wuji-gray-test"
+New-Item -ItemType Directory -Force $env:WUJI_TEST_DIR | Out-Null
+Copy-Item .\target\debug\wuji.exe "$env:WUJI_TEST_DIR\wuji.exe" -Force
+
+function wuji {
+    $o = @{ U = $env:USERPROFILE; H = $env:HOME }
+    $env:USERPROFILE = $env:WUJI_TEST_DIR
+    $env:HOME = $env:WUJI_TEST_DIR
+    $env:WUJI_UPDATE_REPO = "DBinKv1/install"
+    $env:WUJI_TELEMETRY_DISABLE = "1"
+    Write-Host "`n[灰测] $env:WUJI_TEST_DIR\wuji.exe`n" -ForegroundColor Red
+    try { & "$env:WUJI_TEST_DIR\wuji.exe" @args }
+    finally {
+        $env:USERPROFILE = $o.U
+        $env:HOME = $o.H
+        Remove-Item Env:WUJI_UPDATE_REPO, Env:WUJI_TELEMETRY_DISABLE -ErrorAction SilentlyContinue
+    }
+}
+```
+
+之后直接运行 `wuji update`、`wuji update --skills`、`wuji update --check`、`wuji --version`。
+
+恢复环境：
+
+```bash
+# macOS / Linux
+unset -f wuji
+rm -rf "$WUJI_TEST_DIR"
+unset WUJI_TEST_DIR
+```
+
+```powershell
+# PowerShell
+Remove-Item Function:wuji
+Remove-Item Env:WUJI_TEST_DIR
+Remove-Item -Recurse -Force "$env:TEMP\wuji-gray-test" -ErrorAction SilentlyContinue
+```
+
+移除函数后，`wuji` 会回到本机已安装的正式版（例如 `~/.local/bin/wuji`）。
+
+如果用了全局 `export`，且没有保存原值，就无法回退。关闭当前终端窗口，再新开一个。在 bash 或 zsh 中执行 `exec zsh` 无效，因为新 shell 会继承已导出的 `HOME`。
+
 ---
 
-### 3. 关于 Skills 同步的特别说明
+### 3. Skills 同步说明
 
-`wuji update --skills` 的拉取目标是由**当前运行二进制自身的版本号**决定的：
-- 如果当前二进制已经是升级后的灰测版本（如 `2077.10.26`），执行 `--skills` 会匹配灰测仓库的 `v2077.10.26` 标签并成功拉取。
-- 如果对未经升级的正式版 CLI（如 `2026.10.26`）执行 `WUJI_UPDATE_REPO=DBinKv1/install wuji update --skills`，因本仓库没有 `v2026.10.26` 标签，会报 404 错误。
+`wuji update --skills` 按**当前二进制自身的版本号**选择拉取目标。
+- 二进制是升级后的灰测版本（如 `2077.10.26`）时，`--skills` 匹配灰测仓库的 `v2077.10.26` 标签，拉取成功。
+- 用未升级的正式版（如 `2026.10.26`）执行 `WUJI_UPDATE_REPO=DBinKv1/install wuji update --skills` 时，本仓库没有 `v2026.10.26` 标签，返回 404。
+
+---
+
+### 4. 用仓库自带的安装脚本安装灰测版
+
+`scripts/install-cli.sh` 与 `scripts/install-cli.ps1` 是上游原版，通过 `GITHUB_REPO` 指向灰测仓库。
+
+**警告**：默认安装目录会覆盖已安装的正式版 `wuji`。只做验证时，用 `INSTALL_DIR` 或 `-InstallDir` 指定临时目录。
+
+macOS / Linux：
+
+```bash
+GITHUB_REPO=DBinKv1/install sh scripts/install-cli.sh
+
+# 指定版本与安装目录
+GITHUB_REPO=DBinKv1/install VERSION=2077.10.26 INSTALL_DIR=$(mktemp -d) \
+  sh scripts/install-cli.sh
+```
+
+Windows (PowerShell)：
+
+```powershell
+$env:GITHUB_REPO = "DBinKv1/install"
+.\scripts\install-cli.ps1
+
+# 指定版本与安装目录
+$env:GITHUB_REPO = "DBinKv1/install"
+.\scripts\install-cli.ps1 -Version 2077.10.26 -InstallDir "$env:TEMP\wuji-gray"
+```
+
+同步 Skills：
+
+```bash
+GITHUB_REPO=DBinKv1/install sh scripts/install-skills.sh
+```
+
+安装到不在 `PATH` 的目录时，`install-cli.sh` 会向 `~/.bashrc`、`~/.zshrc`、`~/.profile` 追加 PATH 行。
 
 ---
 
 ## 阶段三：测试完成清理
 
-灰测完成后，如果需要恢复仓库为私有状态：
+灰测完成后，如果需要把仓库改回私有状态：
 
 ```bash
 gh repo edit DBinKv1/install --visibility private --accept-visibility-change-consequences
