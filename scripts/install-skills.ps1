@@ -2,7 +2,10 @@
 param(
     [string]$Version = $(if ($env:VERSION) { $env:VERSION } else { "" }),
     [string]$Repo = $(if ($env:GITHUB_REPO) { $env:GITHUB_REPO } else { "wuji-technology/wuji-cli" }),
-    [string]$InstallDir = $(Join-Path ([Environment]::GetFolderPath("UserProfile")) ".agents\skills")
+    [string]$InstallDir = $(
+        $profile = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { [Environment]::GetFolderPath("UserProfile") }
+        Join-Path $profile ".agents\skills"
+    )
 )
 
 Set-StrictMode -Version Latest
@@ -21,7 +24,7 @@ function Write-Success([string]$Message) {
 }
 
 function Detect-SkillsAgents {
-    $userProfile = [Environment]::GetFolderPath("UserProfile")
+    $userProfile = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { [Environment]::GetFolderPath("UserProfile") }
     $appData = if ($env:APPDATA) { $env:APPDATA } else { Join-Path $userProfile "AppData\Roaming" }
     $agents = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
