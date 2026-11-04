@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [string]$Version = $(if ($env:VERSION) { $env:VERSION } else { "" }),
     [string]$Repo = $(if ($env:GITHUB_REPO) { $env:GITHUB_REPO } else { "wuji-technology/wuji-cli" }),
@@ -25,7 +25,7 @@ function Detect-SkillsAgents {
     $appData = if ($env:APPDATA) { $env:APPDATA } else { Join-Path $userProfile "AppData\Roaming" }
     $agents = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
-    # 1. UserProfile 下的单路径探测
+
     $profileSpecs = @{
         "aider-desk" = ".aider-desk"
         "antigravity" = ".gemini\antigravity"
@@ -92,7 +92,7 @@ function Detect-SkillsAgents {
         }
     }
 
-    # 2. APPDATA / Config 目录探测
+
     $appDataSpecs = @{
         "amp" = "amp"
         "devin" = "devin"
@@ -107,7 +107,7 @@ function Detect-SkillsAgents {
         }
     }
 
-    # 3. 环境变量覆盖探测
+
     $claudeDir = if ($env:CLAUDE_CONFIG_DIR) { $env:CLAUDE_CONFIG_DIR } else { Join-Path $userProfile ".claude" }
     if (Test-Path -LiteralPath $claudeDir -PathType Container) { [void]$agents.Add("claude-code") }
 
@@ -126,7 +126,7 @@ function Detect-SkillsAgents {
     $grokDir = if ($env:GROK_HOME) { $env:GROK_HOME } else { Join-Path $userProfile ".grok" }
     if (Test-Path -LiteralPath $grokDir -PathType Container) { [void]$agents.Add("grok") }
 
-    # 4. 其他特殊路径与当前工作目录探测
+
     if (Test-Path -LiteralPath (Join-Path $userProfile ".kimi") -PathType Container) { [void]$agents.Add("kimi-code-cli") }
     if (Test-Path -LiteralPath (Join-Path $userProfile ".openclaw") -PathType Container) { [void]$agents.Add("openclaw") }
 
@@ -177,8 +177,8 @@ function Invoke-ScriptInstall([string]$BaseUrl, [string]$Ref, [string]$TargetDir
             [void][IO.Directory]::CreateDirectory($TargetDir)
         }
 
-        # 复制技能目录下的所有内容到目标路径（兼容 Windows PowerShell 5.1 与 7+）。
-        # 用 -LiteralPath 枚举：$sourceSkills 派生自 TEMP，路径含方括号时 -Path 会当通配符。
+
+
         Get-ChildItem -LiteralPath $sourceSkills | Copy-Item -Destination $TargetDir -Recurse -Force
 
         Write-Success "Installed skills to $TargetDir"
@@ -224,10 +224,10 @@ try {
     Write-Info "Installing skills for detected agents: $($agents -join ' ')"
     $source = if ($ref) { "$Repo#$ref" } else { $Repo }
 
-    # 构造 npx 传参，universal 恒在名单首位以保证 canonical ~/.agents/skills 必装
+
     $npxArgs = @("--yes", "skills", "add", $source, "-g", "-y", "-a", "universal") + $agents
-    # 同 git clone：PowerShell 5.1 在调用方重定向输出时会把 npx 写到 stderr 的内容
-    # 当成终止性错误，直接跳过后面的退出码判定与回退。原生调用期间临时降级。
+
+
     $npxExit = 1
     $previousEap = $ErrorActionPreference
     try {
