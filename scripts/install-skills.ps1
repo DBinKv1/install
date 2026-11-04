@@ -11,6 +11,13 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+# Ensure AppData\Local exists in isolated/gray test user profiles (prevents Volta/npm crash on missing LocalAppData)
+if ($env:USERPROFILE -and -not (Test-Path (Join-Path $env:USERPROFILE "AppData\Local"))) {
+    try {
+        $null = New-Item -ItemType Directory -Force -Path (Join-Path $env:USERPROFILE "AppData\Local") -ErrorAction SilentlyContinue
+    } catch {}
+}
+
 function Write-Info([string]$Message) {
     Write-Host "[INFO] $Message" -ForegroundColor Cyan
 }

@@ -116,7 +116,7 @@ rm -rf "$TEST_DIR"
 ```powershell
 & {
     $TestDir = Join-Path $env:TEMP "wuji-gray-test"
-    New-Item -ItemType Directory -Force -Path $TestDir | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $TestDir "AppData\Local") | Out-Null
     Write-Output "TestDir=$TestDir"
     Copy-Item .\target\debug\wuji.exe (Join-Path $TestDir "wuji.exe")
 
@@ -176,7 +176,7 @@ wuji() {
 
 ```powershell
 $env:WUJI_TEST_DIR = Join-Path $env:TEMP "wuji-gray-test"
-New-Item -ItemType Directory -Force $env:WUJI_TEST_DIR | Out-Null
+New-Item -ItemType Directory -Force (Join-Path $env:WUJI_TEST_DIR "AppData\Local") | Out-Null
 Copy-Item .\target\debug\wuji.exe "$env:WUJI_TEST_DIR\wuji.exe" -Force
 
 function wuji {
