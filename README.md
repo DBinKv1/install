@@ -62,6 +62,11 @@ uv run gray --dry-run
 HOME=$(mktemp -d) WUJI_UPDATE_REPO=DBinKv1/install ./target/debug/wuji update --check
 ```
 
+```pwsh
+pwsh -NoProfile -Command '$env:USERPROFILE=$env:TEMP; $env:WUJI_UPDATE_REPO="DBinKv1/install";
+.\target\debug\wuji.exe update --check'
+```
+
 如果输出显示新版本（如 `2077.10.26`），且 Release URL 指向 `DBinKv1/install`，灰测通道已连通。
 
 ---
@@ -254,6 +259,27 @@ $env:GITHUB_REPO = "DBinKv1/install"
 ```bash
 GITHUB_REPO=DBinKv1/install sh scripts/install-skills.sh
 ```
+
+设置令牌：
+
+- 用途：GitHub API 匿名配额为每小时 60 次。共享出口或 NAT 下容易耗尽。设置后为每小时 5000 次。
+- 资产下载不带令牌，所以私有仓库无法用这两个脚本安装。
+
+macOS / Linux：
+
+```bash
+export GH_TOKEN=$(gh auth token)
+GITHUB_REPO=DBinKv1/install sh scripts/install-cli.sh
+```
+
+Windows (PowerShell)：
+
+```powershell
+$env:GH_TOKEN = gh auth token
+.\scripts\install-cli.ps1
+```
+
+脚本按顺序读取 `GH_TOKEN`，再读 `GITHUB_TOKEN`。两个都未设置时，GitHub API 按匿名请求处理。
 
 安装到不在 `PATH` 的目录时，`install-cli.sh` 会向 `~/.bashrc`、`~/.zshrc`、`~/.profile` 追加 PATH 行。
 
