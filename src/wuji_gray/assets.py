@@ -77,16 +77,23 @@ def archive_member(archive: Path) -> str:
 
 
 def patch_bytes(data: bytes, old: str, new: str) -> tuple[bytes, int]:
-    """按边界替换版本串，返回 (新内容, 命中数)。"""
+    """按边界替换版本串，返回 (新内容, 命中数)。
+
+    上游会把版本串、40 位提交哈希、目标三元组拼成连续字面量，
+    例如 `2026.11.91784f43d…aarch64-app…`。此时版本串后面紧跟数字，
+    用普通边界会漏掉这些位置，因此额外接受「后面紧跟 8 位以上十六进制」的命中。
+    """
     old_b, new_b = old.encode(), new.encode()
     if len(old_b) != len(new_b):
         die(f"版本串长度不同，无法原地替换: {old} -> {new}")
-    pattern = re.compile(rb"(?<![0-9.])" + re.escape(old_b) + rb"(?![0-9.])")
-    hits = len(pattern.findall(data))
+    escaped = re.escape(old_b)
+    strict = re.compile(rb"(?<![0-9.])" + escaped + rb"(?![0-9.])")
+    glued = re.compile(rb"(?<![0-9.])" + escaped + rb"(?=[0-9a-f]{8,})")
+    hits = len(strict.findall(data)) + len(glued.findall(data))
     if hits == 0:
         die(f"二进制内没有命中的版本串: {old}")
-    patched = pattern.sub(new_b, data)
-    if pattern.findall(patched):
+    patched = glued.sub(new_b, strict.sub(new_b, data))
+    if strict.findall(patched) or glued.findall(patched):
         die(f"补丁后仍有旧版本串残留: {old}")
     if len(patched) != len(data):
         die("补丁改变了二进制长度")
